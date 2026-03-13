@@ -1,11 +1,13 @@
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Book My Stay App
- * Use Case 4: Room Search & Availability Check
+ * Use Case 5: Booking Request (First-Come-First-Served)
  *
- * Demonstrates read-only search functionality where guests
- * can view available rooms without modifying system state.
+ * Demonstrates how booking requests are accepted and stored
+ * using a Queue to preserve arrival order.
+ *
+ * No room allocation or inventory modification occurs here.
  *
  * @author Developer
  * @version 1.0
@@ -54,42 +56,68 @@ class SuiteRoom extends Room {
     }
 }
 
-// ---------------- INVENTORY CLASS ----------------
+// ---------------- INVENTORY (READ ONLY HERE) ----------------
 class RoomInventory {
 
     private HashMap<String, Integer> inventory;
 
     public RoomInventory() {
         inventory = new HashMap<>();
-
         inventory.put("Single Room", 5);
         inventory.put("Double Room", 3);
-        inventory.put("Suite Room", 0); // Example: suite currently unavailable
+        inventory.put("Suite Room", 2);
     }
 
-    // Read-only availability retrieval
     public int getAvailability(String roomType) {
         return inventory.getOrDefault(roomType, 0);
     }
 }
 
-// ---------------- SEARCH SERVICE ----------------
-class RoomSearchService {
+// ---------------- RESERVATION CLASS ----------------
+class Reservation {
 
-    public void searchAvailableRooms(RoomInventory inventory, Room[] rooms) {
+    private String guestName;
+    private String roomType;
 
-        System.out.println("===== Available Rooms =====\n");
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
 
-        for (Room room : rooms) {
+    public String getGuestName() {
+        return guestName;
+    }
 
-            int available = inventory.getAvailability(room.getRoomType());
+    public String getRoomType() {
+        return roomType;
+    }
 
-            // Defensive check: show only available rooms
-            if (available > 0) {
-                room.displayRoomDetails();
-                System.out.println("Available Rooms: " + available);
-                System.out.println("---------------------------");
-            }
+    public void displayReservation() {
+        System.out.println("Guest: " + guestName + " | Requested Room: " + roomType);
+    }
+}
+
+// ---------------- BOOKING QUEUE ----------------
+class BookingRequestQueue {
+
+    private Queue<Reservation> requestQueue;
+
+    public BookingRequestQueue() {
+        requestQueue = new LinkedList<>();
+    }
+
+    // Add booking request
+    public void addRequest(Reservation reservation) {
+        requestQueue.add(reservation);
+        System.out.println("Booking request added for " + reservation.getGuestName());
+    }
+
+    // Display all queued requests
+    public void displayRequests() {
+        System.out.println("\n===== Booking Request Queue =====");
+
+        for (Reservation r : requestQueue) {
+            r.displayReservation();
         }
     }
 }
@@ -99,20 +127,20 @@ public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        // Initialize room objects
-        Room single = new SingleRoom();
-        Room dbl = new DoubleRoom();
-        Room suite = new SuiteRoom();
+        // Initialize booking request queue
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        Room[] rooms = {single, dbl, suite};
+        // Guests submit booking requests
+        Reservation r1 = new Reservation("Alice", "Single Room");
+        Reservation r2 = new Reservation("Bob", "Double Room");
+        Reservation r3 = new Reservation("Charlie", "Suite Room");
 
-        // Initialize inventory
-        RoomInventory inventory = new RoomInventory();
+        // Add requests to queue (FIFO order preserved)
+        bookingQueue.addRequest(r1);
+        bookingQueue.addRequest(r2);
+        bookingQueue.addRequest(r3);
 
-        // Search service (read-only operation)
-        RoomSearchService searchService = new RoomSearchService();
-
-        // Guest performs room search
-        searchService.searchAvailableRooms(inventory, rooms);
+        // Display queued requests
+        bookingQueue.displayRequests();
     }
 }
